@@ -5,7 +5,7 @@
     2. for n in nodes
         opens a pipe
         forks a child
-        child executes delegator.o parameter -l x -u y -e|r -n nodes -a (1 or 2)
+        child executes delegator.o parameter -l x -u y -e|r -n nodes -a (1 or 2) -b pipenumber (need this to know which pipe to write to from)
     
     3. for every child
         loop of waitpids
@@ -19,7 +19,7 @@
 
     5. p r i n t f ( ) min, max, avg time, signals
 
-- delegator.c
+- delegator.c -l x -u y -e|r -n nodes -a (1 or 2) -b pipenumber (need this to know which pipe to write to from)
     1. distribute the interval given
     2. for n in nodes
         pens a pipe
