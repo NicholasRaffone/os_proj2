@@ -1,7 +1,7 @@
-// dividing intervals utility
-// by Juan Piñeros and Nicholas Raffone
+// helpers.c : utility functions to distribute an interval among workers + more helper functions
+// by nicholas raffone and juan piñeros
 
-#include "divide_intervals.h"
+#include "helpers.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -61,4 +61,9 @@ int** divide_interval_equally(int lower, int upper, int times)
     }
 
     return intervals;
+}
+
+int* ints_from_group_of_strings(char** group)
+{
+    
 }

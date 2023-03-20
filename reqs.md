@@ -14,7 +14,7 @@
         when waitpid is done for child: read from pipe
     when all children are done: print primes
 
-    4. somewhere: have a running counter of signals
+    4. somewhere: have a running counter of signals **STILL NOT DONE**
         4.1. sort primes
 
     5. p r i n t f ( ) min, max, avg time, signals

@@ -4,8 +4,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "divide_intervals.h"
+#include "helpers.h"
 #include <unistd.h>
+
 
 
 // primes -l lower -u upper -[e|r] -n nodes
@@ -101,22 +102,67 @@ int main(int argc, char** argv)
             }
             // pipe number
             strcpy(arguments[10], "-b");
-            strcpy(arguments[11], "-u");
+            sprintf(arguments[11], "%d", i);
 
             arguments[12] = NULL;
-            // exec it 
+
+            // exec it
+            execv("delegator.o", arguments); 
         }
         // if parent, add to children_pid
         else
         {
-            
+            children_pid[i] = pid;
         }
-        
-
     }
+
+    // 3. wait for delegators to finish, then look at pipe info and aggregate it
+    char** all_primes_received = malloc(nodes*sizeof(char*)); // stores all strings received from delegators containing calculated primes
+    char** all_times_received - malloc(nodes*sizeof(char*)); // same, but for times
+
+    // loop of waits
+    for(int i = 0; i < nodes; i)
+    {
+        int status;
+        waitpid(children_pid[i], &status, 0);
+
+        // look at pipe info
+        int* current_pipe = pipes[i];
+        // close write end
+        close(current_pipe[1]);
+        // we prepare to read an insanely large number of bytes
+        char* primes_from_child[1000];
+        char* times_from_child[1000];
+
+        // format of message: prime prime prime (..) \n time time time time
+        // first line: primes
+        fgets(primes_from_child, 1000, current_pipe[0]);
+        // second line: times
+        fgets(times_from_child, 1000, current_pipe[0]);
+
+        // add to aggregators
+        all_primes_received[i] = primes_from_child;
+        all_times_received[i] = times_from_child;
+    }
+
+    // 4. get an array of all primes and all times
+    int prime_size;
+    int time_size;
+    int* primes = ints_from_group_of_strings(all_primes_received, &prime_size);
+    int* times = ints_from_group_of_strings(all_times_received, &time_size);
+
+    qsort()
     
+    // 5. output results
+    printf("All primes found: \n");
+    for(int i = 0; i < prime_size; i++)
+    {
+        printf("%d ", primes[i]);
+    }
+    printf("\n");
 
 
     return 0;
 }
+
 
