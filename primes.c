@@ -72,7 +72,7 @@ int main(int argc, char** argv)
             // prepare arguments
             // from requirements: delegator.o -l x -u y -e|r -n nodes -a (algorithm 1 or 2) 
             char* arguments[11];
-            for(int j = 0; j < 12; j++)
+            for(int j = 0; j < 11; j++)
             {
                 arguments[j] = malloc(32*sizeof(char));
             }

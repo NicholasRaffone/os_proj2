@@ -21,14 +21,14 @@
     5. p r i n t f ( ) min, max, avg time, signals **DONE**
 
 - delegator.c -l x -u y -e|r -n nodes -a (1 or 2)
-    1. distribute the interval given
-    2. for n in nodes
+    1. distribute the interval given **DONE**
+    2. for n in nodes **DONE**
         opens a pipe
         forks a child
         dup2() pipe ends to stdin and stdout
         child executes worker.o parameter -l x -u y
 
-    3. for every child
+    3. for every child 
         loop of waitpids
         (the last thing a worker does is to send data through pipe)
         ##### format of message: prime prime prime (..) \n time time time time
