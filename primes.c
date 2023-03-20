@@ -4,14 +4,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "divide_intervals.h"
 #include <unistd.h>
 
-
-// helper functions
-// these return an array of int* where arr[0] is lower bound, arr[1] is upper bound
-int** divide_interval_random(int lower, int upper, int times);
-
-int** divide_interval_equally(int lower, int upper, int times);
 
 // primes -l lower -u upper -[e|r] -n nodes
 int main(int argc, char** argv)
@@ -53,7 +48,7 @@ int main(int argc, char** argv)
     {
         intervals = divide_interval_random(lower, upper, nodes);
     }
-    if (distributing == 'e')
+    else if (distributing == 'e')
     {
         intervals = divide_interval_equally(lower, upper, nodes);
     }
@@ -66,9 +61,57 @@ int main(int argc, char** argv)
     {
         pipe(pipes[i]);
         pid_t pid = fork();
-        // if parent, add to children_pid
-
         // if child, exec() stuff
+        if(pid == 0)
+        {
+            // prepare arguments
+            // from requirements: delegator.o -l x -u y -e|r -n nodes -a (algorithm 1 or 2) -b pipenumber 
+            char* arguments[13];
+            for(int j = 0; j < 12; j++)
+            {
+                arguments[j] = malloc(32*sizeof(char));
+            }
+            strcpy(arguments[0], "delegator.o");
+            //bounds
+            strcpy(arguments[1], "-l");
+            sprintf(arguments[2], "%d", intervals[i][0]);
+            strcpy(arguments[3], "-u");
+            sprintf(arguments[4], "%d", intervals[i][1]);
+            // random or equal
+            if (distributing == 'r')
+            {
+                strcpy(arguments[5], "-r");
+            }
+            else if (distributing == 'e')
+            {
+                strcpy(arguments[5], "-e");
+            }
+            // number of workers
+            strcpy(arguments[6], "-n");
+            sprintf(arguments[7], "%d", nodes);
+            // algorithm (1 if odd, 2 if even)
+            strcpy(arguments[8], "-a");
+            if(i%2 != 0)
+            {
+                strcpy(arguments[9], "1");
+            }
+            else
+            {
+                strcpy(arguments[9], "2");
+            }
+            // pipe number
+            strcpy(arguments[10], "-b");
+            strcpy(arguments[11], "-u");
+
+            arguments[12] = NULL;
+            // exec it 
+        }
+        // if parent, add to children_pid
+        else
+        {
+            
+        }
+        
 
     }
     
