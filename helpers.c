@@ -57,7 +57,23 @@ int** divide_interval_equally(int lower, int upper, int times)
         //           2. get the residue
         //           3. 0 <= residue < n. For iterations 0 < residue, make a subinterval of base+1 elements. For the rest, make a subinterval of base elements.
 
-
+        int elements = upper-lower+1;
+        int base = elements / times;
+        int residue = elements % times;
+        int current = lower;
+        
+        for(int i = 0; i < residue; i++)
+        {
+            intervals[i][0] = current;
+            intervals[i][1] = current+base; // (base+1) elements total
+            current = current+base+1; // next element to start 
+        }
+        for(int i = residue; i < times; i++)
+        {
+            intervals[i][0] = current;
+            intervals[i][1] = current+base-1; // (base) elements total
+            current = current+base; // next element to start 
+        }
     }
 
     return intervals;
@@ -65,5 +81,5 @@ int** divide_interval_equally(int lower, int upper, int times)
 
 int* ints_from_group_of_strings(char** group)
 {
-    
+
 }
