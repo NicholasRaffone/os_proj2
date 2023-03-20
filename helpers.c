@@ -10,7 +10,47 @@
 
 int** divide_interval_random(int lower, int upper, int times)
 {
-    
+    // allocate struct
+    int** intervals = (int**) malloc(times*sizeof(int*));
+    for(int i = 0; i < times; i++)
+    {
+        intervals[i] = (int*) malloc(2*sizeof(int));
+    }
+
+    // approach: for an interval [x,y] generate for each subinterval a random point x <= k <= y and assign to said subinterval the range [x,k]
+    //           for the remaining subintervals repeat the process on [k+1,y]
+    //           stop when: k = y therefore we run out of numbers, in that case assign [0,0] to all remaining intervals
+    //                      we reach last subinterval: assign [k+1, y]
+
+    int current = lower;
+    for(int i = 0; i < times; i++)
+    {
+        // stopping conditions
+        if(current-1 == upper)
+        {
+            for(int j = i; j < times; j++)
+            {
+                intervals[j][0] = 0;
+                intervals[j][1] = 0;
+            }
+            break;
+        }
+        else if(i == times-1)
+        {
+            intervals[i][0] = current;
+            intervals[i][1] = upper;
+        }
+        // normal case
+        else
+        {
+            int rand_n = (rand() % (upper - current + 1)) + current; // from https://www.includehelp.com/c-programs/generate-random-numbers-within-a-range.aspx
+            intervals[i][0] = current;
+            intervals[i][1] = rand_n;
+            current = rand_n + 1;
+        }
+    }
+
+    return intervals;
 }
 
 
@@ -79,7 +119,12 @@ int** divide_interval_equally(int lower, int upper, int times)
     return intervals;
 }
 
-int* ints_from_group_of_strings(char** group)
+int* ints_from_group_of_strings(char** group, int* return_size)
 {
 
+}
+
+int int_comparer(const void * a, const void * b) // from https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm
+{
+    return ( *(int*)a - *(int*)b );
 }

@@ -6,10 +6,15 @@
 #include <stdlib.h>
 #include "helpers.h"
 #include <unistd.h>
+#include <signal.h>
 
+int sig1_count = 0;
+int sig2_count = 0;
 
+void handle_usrsig1(int* aggregator);
+void handle_usrsig2(int* aggregator);
 
-// primes -l lower -u upper -[e|r] -n nodes
+// primes.o -l lower -u upper -[e|r] -n nodes
 int main(int argc, char** argv)
 {
     int lower;
@@ -41,7 +46,6 @@ int main(int argc, char** argv)
                 printf("One or more flags not recognised. Exiting...\n");
                 exit(0);
         }
-    printf("%d %d %c %d\n", lower, upper, distributing, nodes);
 
     // 1. assign intervals
     int** intervals;
@@ -66,8 +70,8 @@ int main(int argc, char** argv)
         if(pid == 0)
         {
             // prepare arguments
-            // from requirements: delegator.o -l x -u y -e|r -n nodes -a (algorithm 1 or 2) -b pipenumber 
-            char* arguments[13];
+            // from requirements: delegator.o -l x -u y -e|r -n nodes -a (algorithm 1 or 2) 
+            char* arguments[11];
             for(int j = 0; j < 12; j++)
             {
                 arguments[j] = malloc(32*sizeof(char));
@@ -100,11 +104,15 @@ int main(int argc, char** argv)
             {
                 strcpy(arguments[9], "2");
             }
-            // pipe number
-            strcpy(arguments[10], "-b");
-            sprintf(arguments[11], "%d", i);
 
-            arguments[12] = NULL;
+            arguments[10] = NULL;
+
+            // @NicholasRaffone this is important!
+            // make the pipe to parent stdin and out of the child program by dup2()ing it
+            dup2(pipes[i][0], 0); //set stdin of child program to read end of pipe 
+            dup2(pipes[i][1], 1); //same for stdout
+            close(pipes[i][0]);
+            close(pipes[i][1]);
 
             // exec it
             execv("delegator.o", arguments); 
@@ -119,6 +127,11 @@ int main(int argc, char** argv)
     // 3. wait for delegators to finish, then look at pipe info and aggregate it
     char** all_primes_received = malloc(nodes*sizeof(char*)); // stores all strings received from delegators containing calculated primes
     char** all_times_received - malloc(nodes*sizeof(char*)); // same, but for times
+
+    // set behaviour when receiving signals
+    signal(SIGUSR1, handle_usrsig1);
+    signal(SIGUSR2, handle_usrsig2);
+
 
     // loop of waits
     for(int i = 0; i < nodes; i)
@@ -151,8 +164,16 @@ int main(int argc, char** argv)
     int* primes = ints_from_group_of_strings(all_primes_received, &prime_size);
     int* times = ints_from_group_of_strings(all_times_received, &time_size);
 
-    qsort()
-    
+    qsort(primes, prime_size, sizeof(int), int_comparer);
+    qsort(times, time_size, sizeof(int), int_comparer);
+
+    int sum = 0;
+    for(int i = 0; i < time_size; i++)
+    {
+        sum += times[i];
+    }
+    float avg_time = (float) sum / time_size;
+
     // 5. output results
     printf("All primes found: \n");
     for(int i = 0; i < prime_size; i++)
@@ -160,9 +181,25 @@ int main(int argc, char** argv)
         printf("%d ", primes[i]);
     }
     printf("\n");
+    printf("Min. time to finish interval: %d\n", times[0]);
+    printf("Max. time to finish interval: %d\n", times[time_size-1]);
+    printf("Avg. time to finish interval: %.2f\n", avg_time);
+    printf("No. of SIGUSR1: %d\n", sig1_count);
+    printf("No. of SIGUSR2: %d\n", sig2_count);
 
 
     return 0;
+}
+
+void handle_usrsig1()
+{
+    signal(SIGUSR1, handle_usrsig1);
+    sig1_count++;
+}
+void handle_usrsig2()
+{
+    signal(SIGUSR2, handle_usrsig2);
+    sig2_count++;
 }
 
 
