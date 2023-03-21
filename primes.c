@@ -7,16 +7,22 @@
 #include "helpers.h"
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 int sig1_count = 0;
 int sig2_count = 0;
 
-void handle_usrsig1(int* aggregator);
-void handle_usrsig2(int* aggregator);
+void handle_usrsig1();
+void handle_usrsig2();
 
 // primes.o -l lower -u upper -[e|r] -n nodes
 int main(int argc, char** argv)
 {
+
+    // set behaviour when receiving signals
+    signal(SIGUSR1, handle_usrsig1);
+    signal(SIGUSR2, handle_usrsig2);
+
     int lower;
     int upper;
     char distributing; 
@@ -64,6 +70,7 @@ int main(int argc, char** argv)
     
     for(int i = 0; i < nodes; i++)
     {
+        pipes[i] = malloc(2*sizeof(int));
         pipe(pipes[i]);
         pid_t pid = fork();
         // if child, exec() stuff
@@ -76,7 +83,7 @@ int main(int argc, char** argv)
             {
                 arguments[j] = malloc(32*sizeof(char));
             }
-            strcpy(arguments[0], "delegator.o");
+            strcpy(arguments[0], "./delegator");
             //bounds
             strcpy(arguments[1], "-l");
             sprintf(arguments[2], "%d", intervals[i][0]);
@@ -115,7 +122,10 @@ int main(int argc, char** argv)
             close(pipes[i][1]);
 
             // exec it
-            execv("delegator.o", arguments); 
+            execv("./delegator", arguments); 
+            for(int j = 0; j < 11; j++){
+                free(arguments[j]);
+            }
         }
         // if parent, add to children_pid
         else
@@ -125,68 +135,75 @@ int main(int argc, char** argv)
     }
 
     // 3. wait for delegators to finish, then look at pipe info and aggregate it
-    char** all_primes_received = malloc(nodes*sizeof(char*)); // stores all strings received from delegators containing calculated primes
-    char** all_times_received - malloc(nodes*sizeof(char*)); // same, but for times
+    int total_primes = 0;
+    int* all_primes = (int*) malloc(total_primes*sizeof(int));
 
-    // set behaviour when receiving signals
-    signal(SIGUSR1, handle_usrsig1);
-    signal(SIGUSR2, handle_usrsig2);
-
-
+    int total_times = 0;
+    int* all_times = malloc(total_times*sizeof(int));
     // loop of waits
-    for(int i = 0; i < nodes; i)
+    for(int i = 0; i < nodes; i++)
     {
         int status;
         waitpid(children_pid[i], &status, 0);
-
         // look at pipe info
         int* current_pipe = pipes[i];
         // close write end
         close(current_pipe[1]);
         // we prepare to read an insanely large number of bytes
-        char* primes_from_child[1000];
-        char* times_from_child[1000];
 
-        // format of message: prime prime prime (..) \n time time time time
-        // first line: primes
-        fgets(primes_from_child, 1000, current_pipe[0]);
-        // second line: times
-        fgets(times_from_child, 1000, current_pipe[0]);
+        int num_nums;
+        read(current_pipe[0], &num_nums, sizeof(int));
+        int number;
+        for(int p=0; p<num_nums; p++){
+            read(current_pipe[0], &number, sizeof(number));
+            all_primes = realloc(all_primes, (total_primes+1)*sizeof(int));
+            all_primes[total_primes] = number;
+            total_primes++;
+        }
 
-        // add to aggregators
-        all_primes_received[i] = primes_from_child;
-        all_times_received[i] = times_from_child;
+        int num_times;
+        read(current_pipe[0], &num_times, sizeof(int));
+        int time;
+        for(int p=0; p<num_times; p++){
+            read(current_pipe[0], &time, sizeof(time));
+            all_times = realloc(all_times, (total_times+1)*sizeof(int));
+            all_times[total_times] = number;
+            total_times++;
+        }
     }
 
     // 4. get an array of all primes and all times
-    int prime_size;
-    int time_size;
-    int* primes = ints_from_group_of_strings(all_primes_received, &prime_size);
-    int* times = ints_from_group_of_strings(all_times_received, &time_size);
-
-    qsort(primes, prime_size, sizeof(int), int_comparer);
-    qsort(times, time_size, sizeof(int), int_comparer);
+    qsort(all_primes, total_primes, sizeof(int), int_comparer);
+    qsort(all_times, total_times, sizeof(int), int_comparer);
 
     int sum = 0;
-    for(int i = 0; i < time_size; i++)
+    for(int i = 0; i < total_times; i++)
     {
-        sum += times[i];
+        sum += all_times[i];
     }
-    float avg_time = (float) sum / time_size;
+    float avg_time = (float) sum / total_times;
 
     // 5. output results
     printf("All primes found: \n");
-    for(int i = 0; i < prime_size; i++)
+    for(int i = 0; i < total_primes; i++)
     {
-        printf("%d ", primes[i]);
+        printf("%d ", all_primes[i]);
     }
     printf("\n");
-    printf("Min. time to finish interval: %d\n", times[0]);
-    printf("Max. time to finish interval: %d\n", times[time_size-1]);
-    printf("Avg. time to finish interval: %.2f\n", avg_time);
+    printf("Min. time to finish interval: %.2f\n", (float) all_times[0]/1000);
+    printf("Max. time to finish interval: %.2f\n", (float) all_times[total_times-1]/1000);
+    printf("Avg. time to finish interval: %.2f\n", avg_time/1000);
     printf("No. of SIGUSR1: %d\n", sig1_count);
     printf("No. of SIGUSR2: %d\n", sig2_count);
 
+    free(all_primes);
+    free(all_times);
+
+    for(int i = 0; i < nodes; i++){
+        free(pipes[i]);
+    }
+    free(pipes);
+    free(children_pid);
 
     return 0;
 }
@@ -201,5 +218,3 @@ void handle_usrsig2()
     signal(SIGUSR2, handle_usrsig2);
     sig2_count++;
 }
-
-

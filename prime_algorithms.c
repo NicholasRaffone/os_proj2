@@ -2,6 +2,7 @@
 // by nicholas raffone and juan piñeros
 
 #include "prime_algorithms.h"
+#include "math.h"
 
 int prime_algo1(int n)
 {

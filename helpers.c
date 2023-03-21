@@ -119,11 +119,6 @@ int** divide_interval_equally(int lower, int upper, int times)
     return intervals;
 }
 
-int* ints_from_group_of_strings(char** group, int* return_size)
-{
-
-}
-
 int int_comparer(const void * a, const void * b) // from https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm
 {
     return ( *(int*)a - *(int*)b );

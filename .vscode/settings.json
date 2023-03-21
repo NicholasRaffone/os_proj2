@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "helpers.h": "c"
+        "helpers.h": "c",
+        "random": "c",
+        "algorithm": "c",
+        "__locale": "c",
+        "prime_algorithms.h": "c",
+        "signal.h": "c"
     }
 }
