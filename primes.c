@@ -114,7 +114,6 @@ int main(int argc, char** argv)
 
             arguments[10] = NULL;
 
-            // @NicholasRaffone this is important!
             // make the pipe to parent stdin and out of the child program by dup2()ing it
             dup2(pipes[i][0], 0); //set stdin of child program to read end of pipe 
             dup2(pipes[i][1], 1); //same for stdout
